@@ -1,6 +1,6 @@
 #include <EEPROM.h>
 //-------------------------------------------------------------------------------------------------------
-inline void initSettings()
+static inline void initSettings()
 {
   byte settingValue;
   byte i = 0;
@@ -13,22 +13,22 @@ inline void initSettings()
       switch( i )
       {
         case 0: 
-          settingValue = true;
+          settingValue = true; // gamma table
           break;      
         case 1: 
-          settingValue = false;
+          settingValue = false; // light sensor
           break;
         case 2: 
-          settingValue = 128;
+          settingValue = 30;
           break;
         case 3: 
           settingValue = 10;
           break;
         case 4: 
-          settingValue = 1;
+          settingValue = true; // smooth
           break;
         case 5: 
-          settingValue = 20;
+          settingValue = 40;
           break;
         default:
           settingValue = 0;
@@ -44,16 +44,17 @@ inline void initSettings()
     *(settings + i++) = EEPROM.read(i);
 }
 //-------------------------------------------------------------------------------------------------------
-inline boolean getUpdateSettingsCommand()
+static inline boolean getUpdateSettingsCommand()
 {
   if( Serial.read() == UNOLIGHT_VERSION )
   {   
-    for(byte i = 0; i<NUMBER_OF_SETTINGS; i++)
+    for(byte i = 0; i < NUMBER_OF_SETTINGS; i++)
     {
       byte newSetting = Serial.read();   
       if( *(settings + i) != newSetting )
       {
         *(settings + i) = newSetting;
+        
 #if (SAVE_UPDATED_SETTINGS_TO_EEPROM == true)
         EEPROM.write(i, newSetting); 
 #endif

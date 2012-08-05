@@ -2,10 +2,10 @@
 
 #if (COMMUNICATION_PROTOCOL == AMBLONE_PROTOCOL) 
 // Flags for the serial communication protocol
-#define C_SF1 0xF1 // Startflag for 1-channel mode (1 RGB channel)
-#define C_SF2 0xF2 // Startflag for 2-channel mode (2 RGB channels)
-#define C_SF3 0xF3 // Startflag for 3-channel mode (3 RGB channels)
-#define C_SF4 0xF4 // Startflag for 4-channel mode (4 RGB channels)
+#define C_SF1 0xF1 // Start flag for 1-channel mode (1 RGB channel)
+#define C_SF2 0xF2 // Start flag for 2-channel mode (2 RGB channels)
+#define C_SF3 0xF3 // Start flag for 3-channel mode (3 RGB channels)
+#define C_SF4 0xF4 // Start flag for 4-channel mode (4 RGB channels)
 #define C_END 0x33 // End flag
 #define C_ESC 0x99 // Escape character
 
@@ -13,6 +13,8 @@
 #define S_WAIT_FOR_SF  0
 #define S_RECV_RGB     1
 #define S_RECV_RGB_ESC 2
+
+#define IS_WAITING_FOR_SF ((state == S_WAIT_FOR_SF) ? true : false)
 
 // state we are in: one of the S_* defines
 static byte state =  S_WAIT_FOR_SF;
@@ -25,14 +27,16 @@ static byte recv;
 // The amount of RGB channels we are using
 static byte channelMode;
 //-------------------------------------------------------------------------------------------------------
-boolean inline getAmbloneCommand() 
+static boolean inline getAmbloneCommand() 
 {
   recv = Serial.read();
   
-  switch (state) {
+  switch (state) 
+  {
     case S_WAIT_FOR_SF:
       // =============================== Wait for start flag state
-      switch (recv) {
+      switch (recv) 
+      {
         case C_SF1:
           // Start flag for 1-channel mode
           channelMode = 1;
@@ -64,7 +68,8 @@ boolean inline getAmbloneCommand()
       break;
     case S_RECV_RGB:
       // =============================== RGB Data reception state
-      switch (recv) {
+      switch (recv) 
+      {
         case C_SF1:
           // Start flag for 1-channel mode
           channelMode = 1;
@@ -92,14 +97,16 @@ boolean inline getAmbloneCommand()
         case C_END:
           // End Flag
           // For each channel, we should have received 3 values. If so, we have received a valid packet
-          if (byteCount == channelMode * 3) {
+          if (byteCount == channelMode * 3) 
+          {
             loadNewLedValues(byteCount);
             state = S_WAIT_FOR_SF;
             byteCount = 0;
             return true; // <------------------------ TRUE IS RETURNED
           }
-          else {
-            // Something's gone wrong: restart
+          else 
+          {
+            // Some thing's gone wrong: restart
             state = S_WAIT_FOR_SF;
             byteCount = 0;
             return false;
@@ -129,11 +136,12 @@ static inline void loadNewLedValues(byte numOfValues)
   byte i = 0; 
   while( i < NUM_OF_LEDS )
   {
-    *(incomingData + i) = (i < numOfValues) ? *(payload + i) : 0;
-    i++;
+    *(incomingData + i++) = (i < numOfValues) ? *(payload + i) : 0;
+	*(incomingData + i++) = (i < numOfValues) ? *(payload + i) : 0;
+	*(incomingData + i++) = (i < numOfValues) ? *(payload + i) : 0;
   }
     
-  word *ledChannelAndColorPointer = (*isSmoothEnabled) ? &ledChannelsNew[0][0] : &ledChannels[0][0];
+  byte *ledChannelAndColorPtr = (*isSmoothEnabled) ? ledChannelsNewPtr : ledChannelsPtr;
   byte channel = 0;
 
   noInterrupts();
@@ -141,22 +149,22 @@ static inline void loadNewLedValues(byte numOfValues)
   {
     while( channel < NUM_OF_RGB_LEDS )
     {  
-      byte *incomingValuePointer = incomingData + *(channelOrder + channel++) * 3; 
+      byte *incomingValuePtr = incomingData + *(channelOrder + channel++) * 3; 
 
-      *ledChannelAndColorPointer++ = *(gammaTable + *incomingValuePointer++); // red
-      *ledChannelAndColorPointer++ = *(gammaTable + *incomingValuePointer++); // green
-      *ledChannelAndColorPointer++ = *(gammaTable + *incomingValuePointer);   // blue              
+      *ledChannelAndColorPtr++ = *(gammaTable + *incomingValuePtr++); // red
+      *ledChannelAndColorPtr++ = *(gammaTable + *incomingValuePtr++); // green
+      *ledChannelAndColorPtr++ = *(gammaTable + *incomingValuePtr);   // blue              
     }
   }
   else
   {
     while( channel < NUM_OF_RGB_LEDS )
     {  
-      byte *incomingValuePointer = incomingData + *(channelOrder + channel++) * 3; 
+      byte *incomingValuePtr = incomingData + *(channelOrder + channel++) * 3; 
 
-      *ledChannelAndColorPointer++ = *incomingValuePointer++ * 4; // red
-      *ledChannelAndColorPointer++ = *incomingValuePointer++ * 4; // green
-      *ledChannelAndColorPointer++ = *incomingValuePointer * 4;   // blue              
+      *ledChannelAndColorPtr++ = *incomingValuePtr++ << 2; // red
+      *ledChannelAndColorPtr++ = *incomingValuePtr++ << 2; // green
+      *ledChannelAndColorPtr++ = *incomingValuePtr << 2;   // blue              
     }
   }
   interrupts();
@@ -166,11 +174,6 @@ static inline void resetAmblone()
 {
   state =  S_WAIT_FOR_SF;
   byteCount = 0;
-}
-//-------------------------------------------------------------------------------------------------------
-static inline boolean isWaitingForFirstCommandByte()
-{
-  return (state == S_WAIT_FOR_SF) ? true : false;
 }
 //-------------------------------------------------------------------------------------------------------
 #endif

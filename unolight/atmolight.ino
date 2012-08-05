@@ -1,43 +1,68 @@
-// More on : http://www.vdr-wiki.de/wiki/index.php/Atmo-plugin 
+// More on : http://www.vdr-wiki.de/wiki/index.php/Atmo-plugin
 
 #if (COMMUNICATION_PROTOCOL == ATMOLIGHT_PROTOCOL)
 //-------------------------------------------------------------------------------------------------------
 // Gets LED values sent over serial (Atmolight protocol)
-inline boolean getAtmolightCommand()
+static inline boolean getAtmolightCommand()
 {
-  Serial.read(); // not using this byte (informs of number of bytes left in this packet to be transmited == 15)
+  register byte i = 0;
+  byte *ledChannelAndColorPtr = (*isSmoothEnabled) ? ledChannelsNew : ledChannels;
+  byte *incomingValuePtr = incomingData;
+  const byte *channelOrderPtr = channelOrder;
+  const byte numOfValuesInPacket = Serial.read(); // informs of number of bytes left in this packet to be transmitted
+  const byte numOfUsableValues =  (numOfValuesInPacket >= NUM_OF_LEDS) ? NUM_OF_LEDS : numOfValuesInPacket;
+  byte  numOfUnusableValues = numOfValuesInPacket - numOfUsableValues; 
 
-  byte i = 0; 
-  while( i < NUM_OF_LEDS )
-    *(incomingData + i++) = Serial.read();
-    
-  word *ledChannelAndColorPointer = (*isSmoothEnabled) ? &ledChannelsNew[0][0] : &ledChannels[0][0];
-  byte channel = 0;
+  const unsigned long startTime = millis();
+  while ( Serial.available() <= numOfValuesInPacket ) // waiting for all bytes in packet + 
+  {													  // starting flag of next packet to be received 
+	  if ((millis() - startTime) > 500)
+		  return false;
+  } 
+
+  // Loop is faster replacement for Serial.readBytes((char*)incomingData, NUM_OF_LEDS);
+  while( i < numOfUsableValues )
+  {
+	  *incomingValuePtr++ = Serial.read();
+	  *incomingValuePtr++ = Serial.read();
+	  *incomingValuePtr++ = Serial.read();
+	  i += 3;
+  }
+
+  while( numOfUnusableValues-- )
+	  Serial.read();
   
-  cli();
+  if( Serial.peek() != 0xFF ) // if not reached starting flag of next packet
+	  return false;
+
+  while ( i++ < NUM_OF_LEDS)
+	  *incomingValuePtr++ = 0;
+
+  i = 0;
+
   if( *useGammaTable )
   {
-    while( channel < NUM_OF_RGB_LEDS )
+    while( i++ < NUM_OF_RGB_LEDS )
     {  
-      byte *incomingValuePointer = incomingData + *(channelOrder + channel++) * 3; 
+      incomingValuePtr = incomingData + *channelOrderPtr++; 
 
-      *ledChannelAndColorPointer++ = *(gammaTable + *incomingValuePointer++); // red
-      *ledChannelAndColorPointer++ = *(gammaTable + *incomingValuePointer++); // green
-      *ledChannelAndColorPointer++ = *(gammaTable + *incomingValuePointer);   // blue              
+      *ledChannelAndColorPtr++ = *(gammaTable + *incomingValuePtr++); // red
+      *ledChannelAndColorPtr++ = *(gammaTable + *incomingValuePtr++); // green
+      *ledChannelAndColorPtr++ = *(gammaTable + *incomingValuePtr);   // blue              
     }
   }
   else
   {
-    while( channel < NUM_OF_RGB_LEDS )
+    while( i++ < NUM_OF_RGB_LEDS )
     {  
-      byte *incomingValuePointer = incomingData + *(channelOrder + channel++) * 3; 
+      incomingValuePtr = incomingData + *channelOrderPtr++; 
 
-      *ledChannelAndColorPointer++ = *incomingValuePointer++ * 4; // red
-      *ledChannelAndColorPointer++ = *incomingValuePointer++ * 4; // green
-      *ledChannelAndColorPointer++ = *incomingValuePointer * 4;   // blue              
+      *ledChannelAndColorPtr++ = *incomingValuePtr++; // red
+      *ledChannelAndColorPtr++ = *incomingValuePtr++; // green
+      *ledChannelAndColorPtr++ = *incomingValuePtr;   // blue              
     }
   }
-  sei();
+
   return true;
 }
 //-------------------------------------------------------------------------------------------------------
