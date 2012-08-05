@@ -13,11 +13,12 @@
 #endif
 
 #define UNOLIGHT_VERSION 0x02  // 0x02 = UnoLight v0.20
-#define BETA_VERSION 0x1
+#define BETA_VERSION 0x02
 
 #include <Arduino.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
+#include <avr/power.h>
 #include "arduinoPins2Ports.h"
 #include "leds.h"
 #include "macros.h"
@@ -25,7 +26,9 @@
 #include "serialCommunication.h"
 #include "settings.h"
 
-
-
-
-
+#if (TEST_PERFORMANCE == true)
+volatile unsigned long framesCounter = 0;
+unsigned long temp = 0;
+unsigned long sendTime = micros();
+unsigned long loopCounter = 0;
+#endif

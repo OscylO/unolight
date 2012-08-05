@@ -26,7 +26,7 @@
  A0 (Analog)        PORTC       0
  _________________________________
  
- Arduino Nano has additionaly (not used by UnoLight):
+ Arduino Nano has additionally (not used by UnoLight because they can only be used as analog input):
  A7 (Analog)        PORTC       7 
  A6 (Analog)        PORTC       6
  */
@@ -34,21 +34,21 @@
 #if (defined __AVR_ATmega168__ || defined __AVR_ATmega328P__) // Arduino : Uno, Nano, Nano 3.0, Duemilanove
 
 //PINS A0 - A7 on PORTC
-#if (NUM_ANALOG_INPUTS > 6)      // if Arduino Nano
+#if (NUM_ANALOG_INPUTS > 6)      // if Arduino Nano, Arduino 17, Seeeduino, Lillypad
 
-#define PIN_A7  (PORTC, _BV(5))  // NOT USED BY LED
-#define PIN_A6  (PORTC, _BV(4))  // NOT USED BY LED
+#define PIN_A7  (PORTC, _BV(5))  // NOT USED BY LED AND CAN'T BE USED (ONLY ANALOG IN)
+#define PIN_A6  (PORTC, _BV(4))  // NOT USED BY LED AND CAN'T BE USED (ONLY ANALOG IN)
 
 #if (!defined PIN_A6 || !defined PIN_A7)
 #define PINS_UNDEFINED
-#error : This version of Arduino board has more than 6 analog pins and some of their pin definitions are missing from arduinoPins2Ports.h file.
+#error : "This version of Arduino board has more than 6 analog pins and some of their pin definitions are missing from arduinoPins2Ports.h file."
 #endif
 
 #endif
 
-#define PIN_A5  (PORTC, _BV(5))  // NOT USED BY LED
-#define PIN_A4  (PORTC, _BV(4))  // NOT USED BY LED
-#define PIN_A3  (PORTC, _BV(3))  // NOT USED BY LED
+#define PIN_A5  (PORTC, _BV(5))  // NOT USED BY LED BY DEFAULT
+#define PIN_A4  (PORTC, _BV(4))  // NOT USED BY LED BY DEFAULT
+#define PIN_A3  (PORTC, _BV(3))  // NOT USED BY LED BY DEFAULT
 
 #define PIN_A2  (PORTC, _BV(2))  
 #define PIN_A1  (PORTC, _BV(1))  
@@ -77,17 +77,18 @@
 
 #if (!defined PIN_D0 || !defined PIN_D1 || !defined PIN_D2 || !defined PIN_D3 || !defined PIN_D4 || !defined PIN_D5 || !defined PIN_D6 || !defined PIN_D7 || !defined PIN_D8 || !defined PIN_D9 || !defined PIN_D10 || !defined PIN_D11 || !defined PIN_D12 || !defined PIN_D13 || !defined PIN_A0 || !defined PIN_A1 || !defined PIN_A2 || !defined PIN_A3 || !defined PIN_A4  || !defined PIN_A5)
 #define PINS_UNDEFINED
-#error : Some of pins definitions for this version of Arduino board are missing in arduinoPins2Ports.h file.
+#error : "Some of pins definitions for this version of Arduino board are missing in arduinoPins2Ports.h file."
 #endif
 
 #elif defined (__AVR_ATmega2560__) || defined (__AVR_ATmega1280__)
 // Arduino Mega 2560 http://arduino.cc/en/uploads/Main/arduino-mega2560-schematic.pdf
 // Arduino Mega 1280 http://www.arduino.cc/en/uploads/Main/arduino-mega-schematic.pdf
+// Easy to read version https://spreadsheets.google.com/spreadsheet/pub?key=0AtfNMvfWhA_ccnRId19SNmVWTDE0MEtTOV9HOEdQa0E&gid=0
 // UnoLight has not been tested with Arduino Mega if you have one let me know if it works.
 
-#define PIN_A5  (PORTF, _BV(5))  // NOT USED BY LED
-#define PIN_A4  (PORTF, _BV(4))  // NOT USED BY LED
-#define PIN_A3  (PORTF, _BV(3))  // NOT USED BY LED
+#define PIN_A5  (PORTF, _BV(5))  // NOT USED BY LED BY DEFAULT
+#define PIN_A4  (PORTF, _BV(4))  // NOT USED BY LED BY DEFAULT
+#define PIN_A3  (PORTF, _BV(3))  // NOT USED BY LED BY DEFAULT
 
 #define PIN_A2  (PORTF, _BV(2))  
 #define PIN_A1  (PORTF, _BV(1))  
@@ -114,12 +115,12 @@
 
 #if (!defined PIN_D0 || !defined PIN_D1 || !defined PIN_D2 || !defined PIN_D3 || !defined PIN_D4 || !defined PIN_D5 || !defined PIN_D6 || !defined PIN_D7 || !defined PIN_D8 || !defined PIN_D9 || !defined PIN_D10 || !defined PIN_D11 || !defined PIN_D12 || !defined PIN_D13 || !defined PIN_A0 || !defined PIN_A1 || !defined PIN_A2 || !defined PIN_A3 || !defined PIN_A4  || !defined PIN_A5)
 #define PINS_UNDEFINED
-#error : Some of pins definitions for this version of Arduino board are missing in arduinoPins2Ports.h file.
+#error : "Some of pins definitions for this version of Arduino board are missing in arduinoPins2Ports.h file."
 #endif
 
 #else
 #define PINS_UNDEFINED
-#error : No pins definitions for this version of Arduino board in arduinoPins2Ports.h file.
+#error : "No pins definitions for this version of Arduino board in arduinoPins2Ports.h file."
 #endif
 
 
